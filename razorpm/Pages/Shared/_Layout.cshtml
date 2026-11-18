@@ -1,0 +1,164 @@
+﻿@using razorpm.Helpers
+@{
+    var userId = Context.Session.GetString(SessionKeys.UserId);
+    var name = Context.Session.GetString(SessionKeys.Name) ?? "User";
+    var role = Context.Session.GetString(SessionKeys.Role) ?? "user";
+    var theme = Context.Session.GetString(SessionKeys.Theme) ?? "light";
+    var title = ViewData["Title"]?.ToString() ?? "";
+
+    var isAdmin = role == "admin";
+    var isDirector = role == "director";
+    var isManager = role == "manager";
+    var isExecutor = role == "user";
+
+    var roleTitle = role switch
+    {
+        "admin" => "Администратор",
+        "director" => "Руководитель",
+        "manager" => "Ответственный",
+        _ => "Исполнитель"
+    };
+
+    var userLetter = string.IsNullOrWhiteSpace(name) ? "U" : name.Substring(0, 1).ToUpper();
+}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@title</title>
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+
+<body class="@(theme == "dark" ? "dark-theme" : "")">
+
+    @if (string.IsNullOrEmpty(userId))
+    {
+        @RenderBody()
+    }
+    else
+    {
+        <div class="app">
+            <div class="sidebar">
+                <div class="logo">PM</div>
+
+                <div>
+                    @if (isAdmin)
+                    {
+                        <a href="/AdminDashboard"
+                           class="nav-item @(Context.Request.Path.StartsWithSegments("/AdminDashboard") ? "active" : "")">
+                            Админ-панель
+                        </a>
+
+                        <a href="/Users"
+                           class="nav-item @(Context.Request.Path.StartsWithSegments("/Users") ? "active" : "")">
+                            Пользователи
+                        </a>
+
+                        <a href="/Reports"
+                           class="nav-item @(Context.Request.Path.StartsWithSegments("/Reports") ? "active" : "")">
+                            Аналитика
+                        </a>
+
+                        <a href="/Settings"
+                           class="nav-item @(Context.Request.Path.StartsWithSegments("/Settings") ? "active" : "")">
+                            Настройки
+                        </a>
+
+                        <a href="/Profile"
+                           class="nav-item @(Context.Request.Path.StartsWithSegments("/Profile") ? "active" : "")">
+                            Профиль
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="/"
+                           class="nav-item @(Context.Request.Path == "/" ? "active" : "")">
+                            Главная
+                        </a>
+
+                        <a href="/Tasks"
+                           class="nav-item @(Context.Request.Path.StartsWithSegments("/Tasks") ? "active" : "")">
+                            Задачи
+                        </a>
+
+                        <a href="/Projects"
+                           class="nav-item @(Context.Request.Path.StartsWithSegments("/Projects") ? "active" : "")">
+                            Проекты
+                        </a>
+
+                        @if (isDirector)
+                        {
+                            <a href="/Users"
+                               class="nav-item @(Context.Request.Path.StartsWithSegments("/Users") ? "active" : "")">
+                                Сотрудники
+                            </a>
+                        }
+
+                        <a href="/Calendar"
+                           class="nav-item @(Context.Request.Path.StartsWithSegments("/Calendar") ? "active" : "")">
+                            Календарь
+                        </a>
+
+                        @if (isDirector || isManager)
+                        {
+                            <a href="/Reports"
+                               class="nav-item @(Context.Request.Path.StartsWithSegments("/Reports") ? "active" : "")">
+                                Отчеты
+                            </a>
+
+                            <a href="/Gantt"
+                               class="nav-item @(Context.Request.Path.StartsWithSegments("/Gantt") ? "active" : "")">
+                                Диаграмма
+                            </a>
+                        }
+
+                        <a href="/Settings"
+                           class="nav-item @(Context.Request.Path.StartsWithSegments("/Settings") ? "active" : "")">
+                            Настройки
+                        </a>
+
+                        <a href="/Profile"
+                           class="nav-item @(Context.Request.Path.StartsWithSegments("/Profile") ? "active" : "")">
+                            Профиль
+                        </a>
+                    }
+                </div>
+
+                <div class="user-info">
+                    <div class="user-avatar">@userLetter</div>
+                    <div>@name</div>
+                    <div style="font-size:11px;">@roleTitle</div>
+
+                    <form method="post" asp-page="/Logout" style="margin-top:12px">
+                        <button class="btn btn-soft" type="submit" style="width:100%;">Выйти</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="main-shell">
+                <div class="header">
+                    <div class="header-title">@title</div>
+
+                    <div class="header-actions">
+                        <form method="post" asp-page="/Theme">
+                            <button class="theme-btn" type="submit">
+                                @(theme == "dark" ? "☀" : "☽")
+                            </button>
+                        </form>
+
+                        <a href="/Profile" class="header-avatar">@userLetter</a>
+                    </div>
+                </div>
+
+                <div class="content">
+                    @RenderBody()
+                </div>
+            </div>
+        </div>
+    }
+
+</body>
+</html>

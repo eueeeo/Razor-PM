@@ -1,0 +1,60 @@
+﻿@page "/Notifications"
+@model razorpm.Pages.NotificationsModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Уведомления";
+}
+
+<div class="clean-page">
+    <div class="clean-actions clean-actions-right">
+        <a class="btn btn-soft" asp-page="/Tasks">К задачам</a>
+    </div>
+
+    <div class="clean-stats clean-stats-four">
+ <div class="clean-stat overdue">
+    <div class="clean-stat-label">Просрочено</div>
+    <div class="clean-stat-value">@Model.OverdueCount</div>
+</div>
+
+        <div class="clean-stat">
+            <div class="clean-stat-label">Сегодня</div>
+            <div class="clean-stat-value">@Model.TodayCount</div>
+        </div>
+
+        <div class="clean-stat">
+            <div class="clean-stat-label">На неделе</div>
+            <div class="clean-stat-value">@Model.WeekCount</div>
+        </div>
+
+        <div class="clean-stat">
+            <div class="clean-stat-label">События</div>
+            <div class="clean-stat-value">@Model.ActivityCount</div>
+        </div>
+    </div>
+
+    <section class="clean-card">
+        @if (Model.Items.Count == 0)
+        {
+                <div class="clean-empty">Уведомлений нет</div>
+        }
+        else
+        {
+                <div class="notice-list">
+                @foreach (var item in Model.Items)
+                {
+                            <a class="notice-row" href="@item.Link">
+                                <div class="notice-main">
+                                    <div class="notice-title">@item.Title</div>
+                                    <div class="notice-text">@item.Text</div>
+                                </div>
+
+                                <div class="notice-side">
+                                    <span class="badge">@item.Badge</span>
+                                    <span>@item.DateText</span>
+                                </div>
+                            </a>
+                }
+                </div>
+        }
+    </section>
+</div>

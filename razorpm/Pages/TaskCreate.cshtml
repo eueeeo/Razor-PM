@@ -1,0 +1,194 @@
+﻿@page "/TaskCreate"
+@model razorpm.Pages.TaskCreateModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Создание задачи";
+}
+
+<div class="form-page">
+    <div class="form-actions-top">
+        <a class="btn btn-soft" asp-page="/Tasks">К задачам</a>
+    </div>
+
+    <section class="form-card form-card-wide">
+        <div class="form-card-head">
+            <h1>Новая задача</h1>
+        </div>
+
+        <form method="post" class="clean-form">
+            <div class="form-grid">
+                <div class="form-group form-group-full">
+                    <label>Название</label>
+                    <input asp-for="Title"
+                           required
+                           minlength="3"
+                           maxlength="120" />
+                </div>
+
+                <div class="form-group form-group-full">
+                    <label>Описание</label>
+                    <textarea asp-for="Description"
+                              rows="4"
+                              maxlength="2000"
+                              placeholder="Кратко опишите задачу"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Проект</label>
+                    <select asp-for="ProjectId"
+                            asp-items="Model.ProjectOptions"
+                            required>
+                        <option value="">Выберите проект</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Исполнитель</label>
+                    <select asp-for="AssigneeUserId"
+                            asp-items="Model.AssigneeOptions"
+                            required>
+                        @if (!Model.ProjectId.HasValue)
+                        {
+                            <option value="">Сначала выберите проект</option>
+                        }
+                        else if (Model.AssigneeOptions.Count == 0)
+                        {
+                            <option value="">В проекте нет доступных исполнителей</option>
+                        }
+                        else
+                        {
+                            <option value="">Выберите исполнителя</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Дата начала</label>
+                    <input asp-for="StartDate" type="date" />
+                </div>
+
+                <div class="form-group">
+                    <label>Срок выполнения</label>
+                    <input asp-for="DueDate"
+                           type="date"
+                           required />
+                </div>
+
+                <div class="form-group">
+                    <label>Затрачено часов</label>
+                    <input asp-for="SpentHours"
+                           type="number"
+                           min="0"
+                           max="1000"
+                           step="1"
+                           placeholder="0" />
+                </div>
+
+                <div class="form-group">
+                    <label>Приоритет</label>
+                    <select asp-for="Priority">
+                        <option value="low">Низкий</option>
+                        <option value="medium">Средний</option>
+                        <option value="high">Высокий</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Статус</label>
+                    <select asp-for="Status">
+                        <option value="active">Активна</option>
+                        <option value="done">Завершена</option>
+                    </select>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Error))
+            {
+                <div class="form-error">@Model.Error</div>
+            }
+
+            <div class="form-actions">
+                <button class="btn" type="submit">Создать</button>
+                <a class="btn btn-soft" asp-page="/Tasks">Отмена</a>
+            </div>
+        </form>
+    </section>
+
+    <script>
+        (function () {
+            const projectSelect = document.getElementById("ProjectId");
+            const assigneeSelect = document.getElementById("AssigneeUserId");
+            const initialAssigneeId = "@Model.AssigneeUserId";
+
+            if (!projectSelect || !assigneeSelect) {
+                return;
+            }
+
+            async function loadAssignees(selectedValue) {
+                const projectId = projectSelect.value;
+
+                assigneeSelect.innerHTML = "";
+
+                const loadingOption = document.createElement("option");
+                loadingOption.value = "";
+                loadingOption.textContent = projectId ? "Загрузка..." : "Сначала выберите проект";
+                assigneeSelect.appendChild(loadingOption);
+
+                if (!projectId) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(window.location.pathname + "?handler=Assignees&projectId=" + encodeURIComponent(projectId));
+
+                    if (!response.ok) {
+                        assigneeSelect.innerHTML = "";
+
+                        const errorOption = document.createElement("option");
+                        errorOption.value = "";
+                        errorOption.textContent = "Не удалось загрузить исполнителей";
+                        assigneeSelect.appendChild(errorOption);
+
+                        return;
+                    }
+
+                    const items = await response.json();
+
+                    assigneeSelect.innerHTML = "";
+
+                    const defaultOption = document.createElement("option");
+                    defaultOption.value = "";
+                    defaultOption.textContent = items.length > 0 ? "Выберите исполнителя" : "В проекте нет доступных исполнителей";
+                    assigneeSelect.appendChild(defaultOption);
+
+                    items.forEach(item => {
+                        const option = document.createElement("option");
+                        option.value = item.value;
+                        option.textContent = item.text;
+
+                        if (selectedValue && selectedValue === item.value) {
+                            option.selected = true;
+                        }
+
+                        assigneeSelect.appendChild(option);
+                    });
+                } catch {
+                    assigneeSelect.innerHTML = "";
+
+                    const errorOption = document.createElement("option");
+                    errorOption.value = "";
+                    errorOption.textContent = "Не удалось загрузить исполнителей";
+                    assigneeSelect.appendChild(errorOption);
+                }
+            }
+
+            projectSelect.addEventListener("change", function () {
+                loadAssignees("");
+            });
+
+            if (projectSelect.value && assigneeSelect.options.length <= 1) {
+                loadAssignees(initialAssigneeId);
+            }
+        })();
+    </script>
+</div>

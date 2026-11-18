@@ -1,0 +1,150 @@
+﻿@page "/AdminDashboard"
+@model razorpm.Pages.AdminDashboardModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Админ-панель";
+}
+
+<div class="projects-page">
+    <div class="projects-top">
+        <div>
+            <h2 style="margin:0;">Админ-панель</h2>
+            <div class="text-muted" style="font-size:13px; margin-top:4px;">
+                Общая аналитика системы
+            </div>
+        </div>
+
+        <a class="btn" asp-page="/Users">Пользователи</a>
+    </div>
+
+    <div class="projects-summary" style="margin-bottom:16px;">
+        <div class="projects-summary-item">
+            <span>Пользователи</span>
+            <strong>@Model.TotalUsers</strong>
+        </div>
+
+        <div class="projects-summary-item">
+            <span>Активные</span>
+            <strong>@Model.ActiveUsers</strong>
+        </div>
+
+        <div class="projects-summary-item muted">
+            <span>Отключенные</span>
+            <strong>@Model.DisabledUsers</strong>
+        </div>
+
+        <div class="projects-summary-item">
+            <span>Проекты</span>
+            <strong>@Model.TotalProjects</strong>
+        </div>
+
+        <div class="projects-summary-item">
+            <span>Задачи</span>
+            <strong>@Model.TotalTasks</strong>
+        </div>
+
+        <div class="projects-summary-item">
+            <span>Часы</span>
+            <strong>@Model.TotalHours</strong>
+        </div>
+    </div>
+
+    <div class="projects-summary" style="margin-bottom:16px;">
+        <div class="projects-summary-item">
+            <span>Руководители</span>
+            <strong>@Model.Directors</strong>
+        </div>
+
+        <div class="projects-summary-item">
+            <span>Ответственные</span>
+            <strong>@Model.Managers</strong>
+        </div>
+
+        <div class="projects-summary-item">
+            <span>Исполнители</span>
+            <strong>@Model.Executors</strong>
+        </div>
+
+        <div class="projects-summary-item">
+            <span>Активные задачи</span>
+            <strong>@Model.ActiveTasks</strong>
+        </div>
+
+        <div class="projects-summary-item">
+            <span>Завершённые</span>
+            <strong>@Model.DoneTasks</strong>
+        </div>
+
+        <div class="projects-summary-item muted">
+            <span>Просроченные</span>
+            <strong>@Model.OverdueTasks</strong>
+        </div>
+    </div>
+
+    <div class="project-details-grid">
+        <section class="project-details-card">
+            <div class="project-section-head">
+                <h2>Проекты</h2>
+            </div>
+
+            <div class="project-mini-stats">
+                <div>
+                    <span>Всего</span>
+                    <strong>@Model.TotalProjects</strong>
+                </div>
+
+                <div>
+                    <span>Активные</span>
+                    <strong>@Model.ActiveProjects</strong>
+                </div>
+
+                <div>
+                    <span>Завершённые</span>
+                    <strong>@Model.DoneProjects</strong>
+                </div>
+
+                <div>
+                    <span>Архив</span>
+                    <strong>@Model.ArchivedProjects</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="project-details-card">
+            <div class="project-section-head">
+                <h2>Последняя активность</h2>
+            </div>
+
+            @if (Model.RecentHistory.Count == 0)
+            {
+                <div class="project-details-empty">
+                    Активности пока нет
+                </div>
+            }
+            else
+            {
+                <div class="project-activity-list">
+                    @foreach (var item in Model.RecentHistory)
+                    {
+                        <a class="project-activity-item"
+                           asp-page="/TaskHistory"
+                           asp-route-taskId="@item.TaskItemId">
+
+                            <div class="project-activity-action">
+                                @item.Action
+                            </div>
+
+                            <div class="project-activity-meta">
+                                @item.TaskTitle · @item.UserName
+                            </div>
+
+                            <div class="project-activity-date">
+                                @item.CreatedAt.ToString("dd.MM.yyyy HH:mm")
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+</div>

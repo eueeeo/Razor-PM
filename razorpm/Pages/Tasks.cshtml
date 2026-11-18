@@ -1,0 +1,282 @@
+﻿@page "/Tasks"
+@model razorpm.Pages.TasksModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Задачи";
+
+    var totalTasks = Model.Tasks.Count;
+    var activeTasks = Model.Tasks.Count(t => t.Status != "done");
+    var doneTasks = Model.Tasks.Count(t => t.Status == "done");
+    var overdueTasks = Model.Tasks.Count(t => t.IsOverdue);
+}
+
+<div class="tasks-page">
+    <div class="tasks-top">
+        <div class="tasks-summary">
+            <div class="tasks-summary-item">
+                <span>Всего</span>
+                <strong>@totalTasks</strong>
+            </div>
+
+            <div class="tasks-summary-item">
+                <span>Активные</span>
+                <strong>@activeTasks</strong>
+            </div>
+
+            <div class="tasks-summary-item">
+                <span>Завершенные</span>
+                <strong>@doneTasks</strong>
+            </div>
+
+            <div class="tasks-summary-item soft-overdue">
+                <span>Просроченные</span>
+                <strong>@overdueTasks</strong>
+            </div>
+        </div>
+
+        @if (Model.CanCreateNewTask)
+        {
+            <a class="btn" asp-page="/TaskCreate">+ Задача</a>
+        }
+    </div>
+
+    <div class="tasks-scopes">
+        <a class="tasks-scope @(string.IsNullOrEmpty(Model.scope) ? "active" : "")"
+           asp-page="/Tasks"
+           asp-route-q="@Model.q"
+           asp-route-status="@Model.status"
+           asp-route-projectId="@Model.projectId"
+           asp-route-assigneeId="@Model.assigneeId"
+           asp-route-archive="@Model.archive"
+           asp-route-sort="@Model.sort">
+            Все
+        </a>
+
+        <a class="tasks-scope @(Model.scope == "my" ? "active" : "")"
+           asp-page="/Tasks"
+           asp-route-scope="my"
+           asp-route-q="@Model.q"
+           asp-route-status="@Model.status"
+           asp-route-projectId="@Model.projectId"
+           asp-route-assigneeId="@Model.assigneeId"
+           asp-route-archive="@Model.archive"
+           asp-route-sort="@Model.sort">
+            Мои
+        </a>
+
+        <a class="tasks-scope @(Model.scope == "today" ? "active" : "")"
+           asp-page="/Tasks"
+           asp-route-scope="today"
+           asp-route-q="@Model.q"
+           asp-route-status="@Model.status"
+           asp-route-projectId="@Model.projectId"
+           asp-route-assigneeId="@Model.assigneeId"
+           asp-route-archive="@Model.archive"
+           asp-route-sort="@Model.sort">
+            Сегодня
+        </a>
+
+        <a class="tasks-scope overdue @(Model.scope == "overdue" ? "active" : "")"
+           asp-page="/Tasks"
+           asp-route-scope="overdue"
+           asp-route-q="@Model.q"
+           asp-route-status="@Model.status"
+           asp-route-projectId="@Model.projectId"
+           asp-route-assigneeId="@Model.assigneeId"
+           asp-route-archive="@Model.archive"
+           asp-route-sort="@Model.sort">
+            Просроченные
+        </a>
+    </div>
+
+    <form method="get" class="tasks-filters">
+        <input type="hidden" name="scope" value="@Model.scope" />
+
+        <input name="q"
+               value="@Model.q"
+               placeholder="Поиск задачи..." />
+
+        <select name="status">
+            <option value="">Все статусы</option>
+            <option value="active" selected="@(Model.status == "active")">Активные</option>
+            <option value="done" selected="@(Model.status == "done")">Завершенные</option>
+        </select>
+
+        <select name="archive">
+            <option value="">Обычные проекты</option>
+            <option value="archived" selected="@(Model.archive == "archived")">Архивные проекты</option>
+        </select>
+
+        <select name="projectId">
+            <option value="">Все проекты</option>
+            @foreach (var project in Model.Projects)
+            {
+                <option value="@project.Id" selected="@(Model.projectId == project.Id)">
+                    @project.Name
+                </option>
+            }
+        </select>
+
+        @if (Model.CanUseAssigneeFilter)
+        {
+            <select name="assigneeId">
+                <option value="">Все исполнители</option>
+                @foreach (var user in Model.AssigneeOptions)
+                {
+                    <option value="@user.Value" selected="@(Model.assigneeId?.ToString() == user.Value)">
+                        @user.Text
+                    </option>
+                }
+            </select>
+        }
+
+        <select name="sort">
+            <option value="due" selected="@(string.IsNullOrEmpty(Model.sort) || Model.sort == "due")">По сроку</option>
+            <option value="priority" selected="@(Model.sort == "priority")">По приоритету</option>
+            <option value="project" selected="@(Model.sort == "project")">По проекту</option>
+            <option value="assignee" selected="@(Model.sort == "assignee")">По исполнителю</option>
+            <option value="status" selected="@(Model.sort == "status")">По статусу</option>
+        </select>
+
+        <button class="btn btn-soft" type="submit">Применить</button>
+        <a class="btn btn-soft" asp-page="/Tasks">Сбросить</a>
+    </form>
+
+    <div class="tasks-card">
+        @if (Model.Tasks.Count == 0)
+        {
+            <div class="tasks-empty">
+                Пока нет задач
+            </div>
+        }
+        else
+        {
+            <table class="tasks-table">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>Проект</th>
+                        <th>Исполнитель</th>
+                        <th>Роль</th>
+                        <th>Срок</th>
+                        <th>Приоритет</th>
+                        <th>Статус</th>
+                        <th class="tasks-actions-col">Действия</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var task in Model.Tasks)
+                    {
+                        <tr class="@(task.IsOverdue ? "task-row-overdue" : "")">
+                            <td>
+                                <a class="task-title-link"
+                                   asp-page="/TaskDetails"
+                                   asp-route-id="@task.Id">
+                                    @task.Title
+                                </a>
+                            </td>
+
+                            <td>@task.ProjectTitle</td>
+                            <td>@task.AssigneeName</td>
+
+                            <td>
+                                <span class="badge">
+                                    @Model.GetMyRole(task)
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge soft-mark @(task.IsOverdue ? "soft-red" : "soft-gray")">
+                                    @task.DueDateText
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge soft-mark @(task.Priority == "high" ? "soft-red" : task.Priority == "medium" ? "soft-amber" : "soft-gray")">
+                                    @task.PriorityRu
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge soft-mark @(task.Status == "done" ? "soft-green" : "soft-blue")">
+                                    @task.StatusRu
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="tasks-actions">
+                                    <a class="btn btn-soft btn-small"
+                                       asp-page="/TaskDetails"
+                                       asp-route-id="@task.Id">
+                                        Открыть
+                                    </a>
+
+                                    <a class="btn btn-soft btn-small"
+                                       asp-page="/TaskComments"
+                                       asp-route-taskId="@task.Id">
+                                        Комментарии
+                                    </a>
+
+                                    <a class="btn btn-soft btn-small"
+                                       asp-page="/TaskHistory"
+                                       asp-route-taskId="@task.Id">
+                                        История
+                                    </a>
+
+                                    @if (Model.CanChangeOwnTaskStatus(task) || Model.CanManageTask(task))
+                                    {
+                                        <form method="post"
+                                              asp-page-handler="ChangeStatus"
+                                              asp-route-id="@task.Id">
+
+                                            <input type="hidden" name="q" value="@Model.q" />
+                                            <input type="hidden" name="status" value="@Model.status" />
+                                            <input type="hidden" name="projectId" value="@Model.projectId" />
+                                            <input type="hidden" name="assigneeId" value="@Model.assigneeId" />
+                                            <input type="hidden" name="archive" value="@Model.archive" />
+                                            <input type="hidden" name="sort" value="@Model.sort" />
+                                            <input type="hidden" name="scope" value="@Model.scope" />
+
+                                            <button class="btn btn-soft btn-small" type="submit">
+                                                @(task.Status == "done" ? "Вернуть" : "Завершить")
+                                            </button>
+                                        </form>
+                                    }
+
+                                    @if (Model.CanManageTask(task))
+                                    {
+                                        <a class="btn btn-soft btn-small"
+                                           asp-page="/TaskEdit"
+                                           asp-route-id="@task.Id">
+                                            Изменить
+                                        </a>
+
+                                        <form method="post"
+                                              asp-page-handler="Delete"
+                                              asp-route-id="@task.Id">
+
+                                            <input type="hidden" name="q" value="@Model.q" />
+                                            <input type="hidden" name="status" value="@Model.status" />
+                                            <input type="hidden" name="projectId" value="@Model.projectId" />
+                                            <input type="hidden" name="assigneeId" value="@Model.assigneeId" />
+                                            <input type="hidden" name="archive" value="@Model.archive" />
+                                            <input type="hidden" name="sort" value="@Model.sort" />
+                                            <input type="hidden" name="scope" value="@Model.scope" />
+
+                                            <button class="btn btn-soft btn-small"
+                                                    type="submit"
+                                                    onclick="return confirm('Удалить задачу? Комментарии и вложения тоже будут удалены.');">
+                                                Удалить
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

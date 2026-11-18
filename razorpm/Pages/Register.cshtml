@@ -1,0 +1,76 @@
+﻿@page "/Register"
+@model razorpm.Pages.RegisterModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Регистрация";
+}
+
+<div class="simple-auth-page">
+    <section class="simple-auth-card simple-auth-card-wide">
+        <h1>Регистрация</h1>
+
+        <form method="post" class="simple-auth-form">
+            <div class="form-group">
+                <label>Имя</label>
+                <input asp-for="Name"
+                       autocomplete="name"
+                       required
+                       minlength="2"
+                       maxlength="60" />
+            </div>
+
+            <div class="form-group">
+                <label>Логин</label>
+                <input asp-for="Login"
+                       autocomplete="username"
+                       required
+                       minlength="3"
+                       maxlength="30"
+                       pattern="[A-Za-zА-Яа-яЁё0-9_.-]+"
+                       title="Логин может содержать только буквы, цифры, точку, дефис и подчёркивание" />
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input asp-for="Email"
+                       type="email"
+                       autocomplete="email"
+                       required
+                       maxlength="100" />
+            </div>
+
+            <div class="form-group">
+                <label>Пароль</label>
+                <input asp-for="Password"
+                       type="password"
+                       autocomplete="new-password"
+                       required
+                       minlength="8"
+                       maxlength="100"
+                       pattern="(?=.*[a-zа-яё])(?=.*[A-ZА-ЯЁ])(?=.*\d)(?=.*[^A-Za-zА-Яа-яЁё0-9]).{8,100}"
+                       title="Минимум 8 символов: большая буква, маленькая буква, цифра и спецсимвол" />
+            </div>
+
+            <div class="form-group">
+                <label>Повтор пароля</label>
+                <input asp-for="ConfirmPassword"
+                       type="password"
+                       autocomplete="new-password"
+                       required
+                       minlength="8"
+                       maxlength="100" />
+            </div>
+
+
+            @if (!string.IsNullOrWhiteSpace(Model.Error))
+            {
+                <div class="form-error">@Model.Error</div>
+            }
+
+            <div class="simple-auth-actions">
+                <button class="btn" type="submit">Создать аккаунт</button>
+                <a class="btn btn-soft" asp-page="/Login">Уже есть аккаунт</a>
+            </div>
+        </form>
+    </section>
+</div>

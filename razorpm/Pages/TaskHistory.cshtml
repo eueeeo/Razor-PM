@@ -1,0 +1,84 @@
+﻿@page
+@model razorpm.Pages.TaskHistoryModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "История задачи";
+}
+
+@if (Model.Task == null)
+{
+    <div class="history-card">
+        <div class="history-empty">Задача не найдена</div>
+    </div>
+}
+else
+{
+    <div class="history-page">
+        <div class="history-actions">
+            <a class="btn btn-soft"
+               asp-page="/TaskDetails"
+               asp-route-id="@Model.Task.Id">
+                К задаче
+            </a>
+
+            <a class="btn btn-soft"
+               asp-page="/Tasks">
+                К списку
+            </a>
+        </div>
+
+        <section class="history-card">
+            <div class="history-task-head">
+                <div>
+                    <div class="history-label">Задача</div>
+                    <h1>@Model.Task.Title</h1>
+                </div>
+
+                <div class="history-badges">
+                    <span class="badge">@Model.Task.ProjectTitle</span>
+                    <span class="badge">@Model.Task.AssigneeName</span>
+                    <span class="badge @Model.Task.PriorityClass">@Model.Task.PriorityRu</span>
+                    <span class="badge @(Model.Task.Status == "done" ? "status-done" : "status-active")">
+                        @Model.Task.StatusRu
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <section class="history-card">
+            <div class="history-section-head">
+                <h2>История изменений</h2>
+            </div>
+
+            @if (Model.History.Count == 0)
+            {
+                <div class="history-empty">История по задаче пока пуста</div>
+            }
+            else
+            {
+                <div class="history-list">
+                    @foreach (var item in Model.History)
+                    {
+                        <div class="history-item">
+                            <div class="history-line">
+                                <div class="history-action">@item.Action</div>
+                                <div class="history-date">@item.CreatedAtText</div>
+                            </div>
+
+                            <div class="history-meta">
+                                @item.UserName
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(item.TaskTitle))
+                            {
+                                <div class="history-task-title">
+                                    @item.TaskTitle
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+}

@@ -1,0 +1,159 @@
+﻿@page "/TaskDetails"
+@model razorpm.Pages.TaskDetailsModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Задача";
+}
+
+@if (Model.Task == null)
+{
+    <div class="task-details-card">
+        <div class="task-details-empty">Задача не найдена</div>
+    </div>
+}
+else
+{
+    <div class="task-details-page">
+        <div class="task-details-actions">
+            <a class="btn btn-soft" asp-page="/Tasks">К списку</a>
+
+            @if (Model.Task.ProjectId.HasValue)
+            {
+                <a class="btn btn-soft"
+                   asp-page="/ProjectDetails"
+                   asp-route-id="@Model.Task.ProjectId">
+                    К проекту
+                </a>
+            }
+
+            <a class="btn btn-soft"
+               asp-page="/TaskComments"
+               asp-route-taskId="@Model.Task.Id">
+                Комментарии
+            </a>
+
+            <a class="btn btn-soft"
+               asp-page="/TaskHistory"
+               asp-route-taskId="@Model.Task.Id">
+                История
+            </a>
+
+            @if (Model.CanManageCurrentTask)
+            {
+                <a class="btn"
+                   asp-page="/TaskEdit"
+                   asp-route-id="@Model.Task.Id">
+                    Изменить
+                </a>
+            }
+        </div>
+
+        <section class="task-details-card">
+            <div class="task-details-head">
+                <div>
+                    <div class="task-details-label">Задача</div>
+                    <h1>@Model.Task.Title</h1>
+                </div>
+
+                <div class="task-details-statuses">
+                    <span class="badge @(Model.Task.Status == "done" ? "status-done" : "status-active")">
+                        @Model.Task.StatusRu
+                    </span>
+
+                    <span class="badge @Model.Task.PriorityClass">
+                        @Model.Task.PriorityRu
+                    </span>
+                </div>
+            </div>
+
+            <div class="task-details-grid">
+                <div class="task-detail-item">
+                    <span>Проект</span>
+                    <strong>@Model.Task.ProjectTitle</strong>
+                </div>
+
+                <div class="task-detail-item">
+                    <span>Исполнитель</span>
+                    <strong>@Model.Task.AssigneeName</strong>
+                </div>
+
+                <div class="task-detail-item">
+                    <span>Дата начала</span>
+                    <strong>@Model.Task.StartDateText</strong>
+                </div>
+
+                <div class="task-detail-item @(Model.Task.IsOverdue ? "detail-overdue" : "")">
+                    <span>Срок</span>
+                    <strong>@Model.Task.DueDateText</strong>
+                </div>
+
+                <div class="task-detail-item">
+                    <span>Затрачено часов</span>
+                    <strong>@Model.Task.SpentHoursText</strong>
+                </div>
+
+            </div>
+
+            <div class="task-description-block">
+                <div class="task-details-label">Описание</div>
+
+                @if (string.IsNullOrWhiteSpace(Model.Task.Description))
+                {
+                    <div class="task-description-empty">Описание не заполнено</div>
+                }
+                else
+                {
+                    <div class="task-description-text">
+                        @Model.Task.Description
+                    </div>
+                }
+            </div>
+        </section>
+
+        @if (Model.CanChangeStatusCurrentTask || Model.CanManageCurrentTask)
+        {
+            <section class="task-details-card">
+                <div class="task-secondary-head">
+                    <h2>Действия</h2>
+                </div>
+
+                <div class="task-details-actions-bottom">
+                    @if (Model.CanChangeStatusCurrentTask)
+                    {
+                        <form method="post"
+                              asp-page-handler="SetStatus"
+                              asp-route-id="@Model.Task.Id">
+
+                            <button class="btn btn-soft"
+                                    type="submit"
+                                    name="value"
+                                    value="@(Model.Task.Status == "done" ? "active" : "done")">
+                                @(Model.Task.Status == "done" ? "Вернуть в работу" : "Завершить задачу")
+                            </button>
+                        </form>
+                    }
+
+                    @if (Model.CanManageCurrentTask)
+                    {
+                        <a class="btn btn-soft"
+                           asp-page="/TaskEdit"
+                           asp-route-id="@Model.Task.Id">
+                            Редактировать
+                        </a>
+
+                        <form method="post"
+                              asp-page-handler="Delete"
+                              asp-route-id="@Model.Task.Id">
+
+                            <button class="btn btn-danger"
+                                    type="submit"
+                                    onclick="return confirm('Удалить задачу?');">
+                                Удалить
+                            </button>
+                        </form>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+}

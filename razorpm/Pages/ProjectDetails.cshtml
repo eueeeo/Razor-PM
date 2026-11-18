@@ -1,0 +1,399 @@
+﻿@page "/ProjectDetails"
+@model razorpm.Pages.ProjectDetailsModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Проект";
+}
+
+@if (Model.Project == null)
+{
+    <div class="project-details-card">
+        <div class="project-details-empty">Проект не найден</div>
+    </div>
+}
+else
+{
+    <div class="project-details-page">
+        <div class="project-details-actions">
+            <a class="btn btn-soft" asp-page="/Projects">К проектам</a>
+
+            @if (Model.CanManageCurrentProject)
+            {
+                <a class="btn btn-soft"
+                   asp-page="/ProjectEdit"
+                   asp-route-id="@Model.Project.Id">
+                    Изменить
+                </a>
+
+                <a class="btn"
+                   asp-page="/TaskCreate"
+                   asp-route-projectId="@Model.Project.Id">
+                    + Задача
+                </a>
+            }
+        </div>
+
+        <section class="project-details-card">
+            <div class="project-details-head">
+                <div>
+                    <div class="project-details-label">Проект</div>
+                    <h1>@Model.Project.Name</h1>
+                </div>
+
+                <div class="project-details-badges">
+                    <span class="badge @(Model.Project.Status == "done" ? "status-done" : "status-active")">
+                        @(Model.Project.Status == "done" ? "Завершен" : "Активный")
+                    </span>
+
+                    @if (Model.Project.IsArchived)
+                    {
+                        <span class="badge">Архив</span>
+                    }
+                </div>
+            </div>
+
+            <div class="project-details-info">
+                <div class="project-info-item">
+                    <span>Ответственный</span>
+                    <strong>@Model.Project.OwnerName</strong>
+                </div>
+
+                <div class="project-info-item">
+                    <span>Участники</span>
+                    <strong>@Model.Members.Count</strong>
+                </div>
+
+                <div class="project-info-item">
+                    <span>Задачи</span>
+                    <strong>@Model.TasksTotal</strong>
+                </div>
+
+                <div class="project-info-item">
+                    <span>Прогресс</span>
+                    <strong>@Model.ProgressPercent%</strong>
+                </div>
+            </div>
+
+            <div class="project-details-progress">
+                <div style="width:@Model.ProgressPercent%"></div>
+            </div>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(Model.ProjectError))
+        {
+            <div class="form-error">
+                @Model.ProjectError
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.ProjectMessage))
+        {
+            <div class="form-success">
+                @Model.ProjectMessage
+            </div>
+        }
+
+        <div class="project-details-grid">
+            <section class="project-details-card">
+                <div class="project-section-head">
+                    <h2>Задачи</h2>
+                </div>
+
+                <div class="project-mini-stats">
+                    <div>
+                        <span>Активные</span>
+                        <strong>@Model.TasksActive</strong>
+                    </div>
+
+                    <div>
+                        <span>Завершенные</span>
+                        <strong>@Model.TasksDone</strong>
+                    </div>
+
+                    <div class="soft-overdue">
+                        <span>Просроченные</span>
+                        <strong>@Model.TasksOverdue</strong>
+                    </div>
+                </div>
+
+                <form method="get" class="project-task-filters">
+                    <input type="hidden" name="id" value="@Model.Project.Id" />
+
+                    <input name="taskQ"
+                           value="@Model.taskQ"
+                           placeholder="Поиск задач" />
+
+                    <select name="taskStatus">
+                        <option value="">Все статусы</option>
+                        <option value="active" selected="@(Model.taskStatus == "active")">Активные</option>
+                        <option value="done" selected="@(Model.taskStatus == "done")">Завершенные</option>
+                    </select>
+
+                    <select name="taskAssigneeId">
+                        <option value="">Все исполнители</option>
+                        @foreach (var user in Model.TaskAssigneeOptions)
+                        {
+                            <option value="@user.Value" selected="@(Model.taskAssigneeId?.ToString() == user.Value)">
+                                @user.Text
+                            </option>
+                        }
+                    </select>
+
+                    <select name="taskSort">
+                        <option value="due" selected="@(string.IsNullOrEmpty(Model.taskSort) || Model.taskSort == "due")">По сроку</option>
+                        <option value="start" selected="@(Model.taskSort == "start")">По началу</option>
+                        <option value="priority" selected="@(Model.taskSort == "priority")">По приоритету</option>
+                        <option value="assignee" selected="@(Model.taskSort == "assignee")">По исполнителю</option>
+                        <option value="status" selected="@(Model.taskSort == "status")">По статусу</option>
+                    </select>
+
+                    <button class="btn btn-soft" type="submit">Применить</button>
+
+                    <a class="btn btn-soft"
+                       asp-page="/ProjectDetails"
+                       asp-route-id="@Model.Project.Id">
+                        Сбросить
+                    </a>
+                </form>
+
+                @if (Model.Tasks.Count == 0)
+                {
+                    <div class="project-details-empty">Задачи не найдены</div>
+                }
+                else
+                {
+                    <div class="project-tasks-table-wrap">
+                        <table class="project-tasks-table">
+                            <thead>
+                                <tr>
+                                    <th>Название</th>
+                                    <th>Исполнитель</th>
+                                    <th>Срок</th>
+                                    <th>Приоритет</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var task in Model.Tasks)
+                                {
+                                    <tr class="@(task.IsOverdue ? "task-row-overdue" : "")">
+                                        <td>
+                                            <a class="project-task-link"
+                                               asp-page="/TaskDetails"
+                                               asp-route-id="@task.Id">
+                                                @task.Title
+                                            </a>
+                                        </td>
+
+                                        <td>@task.AssigneeName</td>
+
+                                        <td>
+                                            <span class="badge @(task.IsOverdue ? "badge-overdue" : "")">
+                                                @task.DueDateText
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <span class="badge @task.PriorityClass">
+                                                @task.PriorityRu
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <span class="badge @(task.Status == "done" ? "status-done" : "status-active")">
+                                                @task.StatusRu
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <div class="project-task-actions">
+                                                <a class="btn btn-soft btn-small"
+                                                   asp-page="/TaskDetails"
+                                                   asp-route-id="@task.Id">
+                                                    Открыть
+                                                </a>
+
+                                                @if (Model.CanChangeTaskStatus(task))
+                                                {
+                                                    <form method="post"
+                                                          asp-page-handler="ChangeTaskStatus"
+                                                          asp-route-id="@Model.Project.Id"
+                                                          asp-route-taskId="@task.Id">
+
+                                                        <input type="hidden" name="taskQ" value="@Model.taskQ" />
+                                                        <input type="hidden" name="taskStatus" value="@Model.taskStatus" />
+                                                        <input type="hidden" name="taskAssigneeId" value="@Model.taskAssigneeId" />
+                                                        <input type="hidden" name="taskSort" value="@Model.taskSort" />
+
+                                                        <button class="btn btn-soft btn-small" type="submit">
+                                                            @(task.Status == "done" ? "Вернуть" : "Завершить")
+                                                        </button>
+                                                    </form>
+                                                }
+
+                                                @if (Model.CanManageTask(task))
+                                                {
+                                                    <a class="btn btn-soft btn-small"
+                                                       asp-page="/TaskEdit"
+                                                       asp-route-id="@task.Id">
+                                                        Изменить
+                                                    </a>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </section>
+
+            <section class="project-details-card">
+                <div class="project-section-head">
+                    <h2>Участники</h2>
+                </div>
+
+                <div class="project-owner-block">
+                    <div>
+                        <span>Ответственный</span>
+                        <strong>@Model.Project.OwnerName</strong>
+                    </div>
+                </div>
+
+                @if (Model.CanChangeProjectOwner)
+                {
+                    <div class="project-owner-block" style="margin-top:12px;">
+                        <div style="width:100%;">
+                            <span>Смена ответственного</span>
+
+                            @if (Model.OwnerOptions.Count == 0)
+                            {
+                                <div class="project-details-empty" style="margin-top:10px;">
+                                    Нет других активных ответственных
+                                </div>
+                            }
+                            else
+                            {
+                                <form method="post"
+                                      asp-page-handler="ChangeOwner"
+                                      asp-route-id="@Model.Project.Id"
+                                      class="project-add-member-form"
+                                      style="margin-top:10px;">
+
+                                    <select name="newOwnerId" required>
+                                        <option value="">Выберите ответственного</option>
+
+                                        @foreach (var user in Model.OwnerOptions)
+                                        {
+                                            <option value="@user.Value">@user.Text</option>
+                                        }
+                                    </select>
+
+                                    <button class="btn btn-soft"
+                                            type="submit"
+                                            onclick="return confirm('Сменить ответственного за проект?');">
+                                        Сменить
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (Model.Members.Count == 0)
+                {
+                    <div class="project-details-empty">Участников пока нет</div>
+                }
+                else
+                {
+                    <div class="project-members-list">
+                        @foreach (var member in Model.Members)
+                        {
+                            <div class="project-member-item">
+                                <div>
+                                    <div class="project-member-name">@member.Name</div>
+                                    <div class="project-member-login">@member.Login</div>
+                                </div>
+
+                                @if (Model.CanManageCurrentProject)
+                                {
+                                    <form method="post"
+                                          asp-page-handler="RemoveMember"
+                                          asp-route-id="@Model.Project.Id"
+                                          asp-route-userId="@member.Id">
+
+                                        <button class="btn btn-soft btn-small"
+                                                type="submit"
+                                                onclick="return confirm('Удалить участника из проекта?');">
+                                            Убрать
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (Model.CanManageCurrentProject && Model.AvailableUsers.Count > 0)
+                {
+                    <form method="post"
+                          asp-page-handler="AddMember"
+                          asp-route-id="@Model.Project.Id"
+                          class="project-add-member-form">
+
+                        <select name="userId" required>
+                            @foreach (var user in Model.AvailableUsers)
+                            {
+                                <option value="@user.Id">@user.Name (@user.Login)</option>
+                            }
+                        </select>
+
+                        <button class="btn btn-soft" type="submit">
+                            Добавить
+                        </button>
+                    </form>
+                }
+            </section>
+
+            <section class="project-details-card project-activity-card">
+                <div class="project-section-head">
+                    <h2>Последняя активность</h2>
+                </div>
+
+                @if (Model.RecentHistory.Count == 0)
+                {
+                    <div class="project-details-empty">
+                        Изменений пока нет
+                    </div>
+                }
+                else
+                {
+                    <div class="project-activity-list">
+                        @foreach (var item in Model.RecentHistory)
+                        {
+                            <a class="project-activity-item"
+                               asp-page="/TaskHistory"
+                               asp-route-taskId="@item.TaskItemId">
+
+                                <div class="project-activity-action">
+                                    @item.Action
+                                </div>
+
+                                <div class="project-activity-meta">
+                                    @item.TaskTitle · @item.UserName
+                                </div>
+
+                                <div class="project-activity-date">
+                                    @item.CreatedAtText
+                                </div>
+                            </a>
+                        }
+                    </div>
+                }
+            </section>
+        </div>
+    </div>
+}

@@ -1,0 +1,203 @@
+﻿@page
+@model razorpm.Pages.ProjectsModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Проекты";
+
+    var totalProjects = Model.Projects.Count;
+    var activeProjects = Model.Projects.Count(p => p.Status != "done" && !p.IsArchived);
+    var doneProjects = Model.Projects.Count(p => p.Status == "done" && !p.IsArchived);
+    var archivedProjects = Model.Projects.Count(p => p.IsArchived);
+}
+
+<div class="projects-page">
+    <div class="projects-top">
+        <div class="projects-summary">
+            <div class="projects-summary-item">
+                <span>Всего</span>
+                <strong>@totalProjects</strong>
+            </div>
+
+            <div class="projects-summary-item">
+                <span>Активные</span>
+                <strong>@activeProjects</strong>
+            </div>
+
+            <div class="projects-summary-item">
+                <span>Завершенные</span>
+                <strong>@doneProjects</strong>
+            </div>
+
+            <div class="projects-summary-item muted">
+                <span>Архив</span>
+                <strong>@archivedProjects</strong>
+            </div>
+        </div>
+
+        @if (Model.CanCreateNewProject)
+        {
+            <a class="btn" asp-page="/ProjectCreate">+ Проект</a>
+        }
+    </div>
+
+    <form method="get" class="projects-filters">
+        <input name="q"
+               value="@Model.q"
+               placeholder="Поиск проекта" />
+
+        <select name="status">
+            <option value="">Все статусы</option>
+            <option value="active" selected="@(Model.status == "active")">Активные</option>
+            <option value="done" selected="@(Model.status == "done")">Завершенные</option>
+        </select>
+
+        <select name="archive">
+            <option value="">Все проекты</option>
+            <option value="active" selected="@(Model.archive == "active")">Обычные</option>
+            <option value="archived" selected="@(Model.archive == "archived")">Архивные</option>
+        </select>
+
+        @if (Model.IsAdmin)
+        {
+            <select name="ownerId">
+                <option value="">Все владельцы</option>
+                @foreach (var owner in Model.OwnerOptions)
+                {
+                    <option value="@owner.Value" selected="@(Model.ownerId?.ToString() == owner.Value)">
+                        @owner.Text
+                    </option>
+                }
+            </select>
+        }
+
+        <button class="btn btn-soft" type="submit">Применить</button>
+        <a class="btn btn-soft" asp-page="/Projects">Сбросить</a>
+    </form>
+
+    <div class="projects-card">
+        @if (Model.Projects.Count == 0)
+        {
+            <div class="projects-empty">
+                Проекты не найдены
+            </div>
+        }
+        else
+        {
+            <table class="projects-table">
+                <thead>
+                    <tr>
+                        <th>Проект</th>
+                        <th>Владелец</th>
+                        <th>Роль</th>
+                        <th>Статус</th>
+                        <th>Задачи</th>
+                        <th>Участники</th>
+                        <th>Прогресс</th>
+                        <th class="projects-actions-col">Действия</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var project in Model.Projects)
+                    {
+                        <tr class="@(project.IsArchived ? "project-row-archived" : "")">
+                            <td>
+                                <a class="project-title-link"
+                                   asp-page="/ProjectDetails"
+                                   asp-route-id="@project.Id">
+                                    @project.Name
+                                </a>
+
+                                @if (project.IsArchived)
+                                {
+                                    <div class="project-small-muted">В архиве</div>
+                                }
+                            </td>
+
+                            <td>@project.OwnerName</td>
+
+                            <td>
+                                <span class="badge">
+                                    @Model.GetMyRole(project)
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="badge @(project.Status == "done" ? "status-done" : "status-active")">
+                                    @(project.Status == "done" ? "Завершен" : "Активный")
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="project-task-count">
+                                    <span>@project.TasksCount</span>
+                                    <small>@project.ActiveTasks активные</small>
+                                </div>
+                            </td>
+
+                            <td>@project.MembersCount</td>
+
+                            <td>
+                                <div class="project-progress">
+                                    <div class="project-progress-line">
+                                        <div style="width:@project.ProgressPercent%"></div>
+                                    </div>
+                                    <span>@project.ProgressPercent%</span>
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="projects-actions">
+                                    <a class="btn btn-soft btn-small"
+                                       asp-page="/ProjectDetails"
+                                       asp-route-id="@project.Id">
+                                        Открыть
+                                    </a>
+
+                                    @if (Model.CanManage(project))
+                                    {
+                                        <a class="btn btn-soft btn-small"
+                                           asp-page="/ProjectEdit"
+                                           asp-route-id="@project.Id">
+                                            Изменить
+                                        </a>
+
+                                        <form method="post"
+                                              asp-page-handler="ToggleArchive"
+                                              asp-route-id="@project.Id">
+
+                                            <input type="hidden" name="q" value="@Model.q" />
+                                            <input type="hidden" name="status" value="@Model.status" />
+                                            <input type="hidden" name="ownerId" value="@Model.ownerId" />
+                                            <input type="hidden" name="archive" value="@Model.archive" />
+
+                                            <button class="btn btn-soft btn-small" type="submit">
+                                                @(project.IsArchived ? "Вернуть" : "В архив")
+                                            </button>
+                                        </form>
+
+                                        <form method="post"
+                                              asp-page-handler="Delete"
+                                              asp-route-id="@project.Id">
+
+                                            <input type="hidden" name="q" value="@Model.q" />
+                                            <input type="hidden" name="status" value="@Model.status" />
+                                            <input type="hidden" name="ownerId" value="@Model.ownerId" />
+                                            <input type="hidden" name="archive" value="@Model.archive" />
+
+                                            <button class="btn btn-soft btn-small"
+                                                    type="submit"
+                                                    onclick="return confirm('Удалить проект?');">
+                                                Удалить
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

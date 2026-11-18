@@ -1,0 +1,257 @@
+﻿@page
+@model razorpm.Pages.IndexModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Главная";
+}
+
+<div class="clean-page">
+    <div class="clean-actions">
+        <a class="btn" asp-page="/Tasks">Задачи</a>
+        <a class="btn btn-soft" asp-page="/Projects">Проекты</a>
+        <a class="btn btn-soft" asp-page="/Calendar">Календарь</a>
+
+        @if (Model.IsDirector)
+        {
+            <a class="btn btn-soft" asp-page="/Users">Сотрудники</a>
+            <a class="btn btn-soft" asp-page="/Reports">Отчеты</a>
+            <a class="btn btn-soft" asp-page="/Gantt">Диаграмма</a>
+        }
+
+        @if (Model.IsManager)
+        {
+            <a class="btn btn-soft" asp-page="/Reports">Отчеты</a>
+            <a class="btn btn-soft" asp-page="/Gantt">Диаграмма</a>
+        }
+    </div>
+
+    <section class="clean-card" style="margin-bottom:16px;">
+        <div class="clean-card-head">
+            <div>
+                <h2>@Model.DashboardTitle</h2>
+                <div class="text-muted" style="font-size:13px;">
+                    @Model.DashboardDescription
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="clean-stats">
+        <div class="clean-stat">
+            <div class="clean-stat-label">Проекты</div>
+            <div class="clean-stat-value">@Model.ProjectsTotal</div>
+        </div>
+
+        <div class="clean-stat">
+            <div class="clean-stat-label">Задачи</div>
+            <div class="clean-stat-value">@Model.TasksTotal</div>
+        </div>
+
+        <div class="clean-stat">
+            <div class="clean-stat-label">Активные</div>
+            <div class="clean-stat-value">@Model.TasksActive</div>
+        </div>
+
+        <div class="clean-stat">
+            <div class="clean-stat-label">Завершенные</div>
+            <div class="clean-stat-value">@Model.TasksDone</div>
+        </div>
+
+        <div class="clean-stat">
+            <div class="clean-stat-label">Сегодня</div>
+            <div class="clean-stat-value">@Model.TasksToday</div>
+        </div>
+
+        <div class="clean-stat overdue">
+            <div class="clean-stat-label">Просроченные</div>
+            <div class="clean-stat-value">@Model.TasksOverdue</div>
+        </div>
+    </div>
+
+    <div class="clean-grid">
+        <section class="clean-card">
+            <div class="clean-card-head">
+                <h2>Последние задачи</h2>
+                <a asp-page="/Tasks">Открыть</a>
+            </div>
+
+            @if (Model.LastTasks.Count == 0)
+            {
+                <div class="clean-empty">Пока нет задач</div>
+            }
+            else
+            {
+                <table class="clean-table">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Проект</th>
+                            <th>Статус</th>
+                            <th>Срок</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var task in Model.LastTasks)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-page="/TaskDetails" asp-route-id="@task.Id">
+                                        @task.Title
+                                    </a>
+                                </td>
+
+                                <td>@task.ProjectTitle</td>
+
+                                <td>
+                                    <span class="badge @(task.Status == "done" ? "status-done" : "status-active")">
+                                        @task.StatusRu
+                                    </span>
+                                </td>
+
+                                <td>@task.DueDateText</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+
+        <section class="clean-card">
+            <div class="clean-card-head">
+                <h2>Последние проекты</h2>
+                <a asp-page="/Projects">Открыть</a>
+            </div>
+
+            @if (Model.LastProjects.Count == 0)
+            {
+                <div class="clean-empty">Проектов пока нет</div>
+            }
+            else
+            {
+                <table class="clean-table">
+                    <thead>
+                        <tr>
+                            <th>Проект</th>
+                            <th>Владелец</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var project in Model.LastProjects)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-page="/ProjectDetails" asp-route-id="@project.Id">
+                                        @project.Name
+                                    </a>
+                                </td>
+
+                                <td>@project.OwnerName</td>
+
+                                <td>
+                                    <span class="badge @(project.Status == "done" ? "status-done" : "status-active")">
+                                        @(project.Status == "done" ? "Завершен" : "Активный")
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+
+        <section class="clean-card">
+            <div class="clean-card-head">
+                <h2>Ближайшие сроки</h2>
+                <a asp-page="/Calendar">Календарь</a>
+            </div>
+
+            @if (Model.UpcomingTasks.Count == 0)
+            {
+                <div class="clean-empty">Ближайших сроков нет</div>
+            }
+            else
+            {
+                <table class="clean-table">
+                    <thead>
+                        <tr>
+                            <th>Задача</th>
+                            <th>Исполнитель</th>
+                            <th>Срок</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var task in Model.UpcomingTasks)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-page="/TaskDetails" asp-route-id="@task.Id">
+                                        @task.Title
+                                    </a>
+                                </td>
+
+                                <td>@task.AssigneeName</td>
+                                <td>@task.DueDateText</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+
+        <section class="clean-card">
+            <div class="clean-card-head">
+                <h2>Требуют внимания</h2>
+                <a asp-page="/Tasks" asp-route-scope="overdue">Открыть</a>
+            </div>
+
+            @if (Model.OverdueTasks.Count == 0 && Model.TodayTasks.Count == 0)
+            {
+                <div class="clean-empty">Срочных задач нет</div>
+            }
+            else
+            {
+                <table class="clean-table">
+                    <thead>
+                        <tr>
+                            <th>Задача</th>
+                            <th>Причина</th>
+                            <th>Срок</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var task in Model.OverdueTasks)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-page="/TaskDetails" asp-route-id="@task.Id">
+                                        @task.Title
+                                    </a>
+                                </td>
+                                <td>Просрочена</td>
+                                <td>@task.DueDateText</td>
+                            </tr>
+                        }
+
+                        @foreach (var task in Model.TodayTasks)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-page="/TaskDetails" asp-route-id="@task.Id">
+                                        @task.Title
+                                    </a>
+                                </td>
+                                <td>Срок сегодня</td>
+                                <td>@task.DueDateText</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    </div>
+</div>

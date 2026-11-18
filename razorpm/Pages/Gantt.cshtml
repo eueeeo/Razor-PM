@@ -1,0 +1,342 @@
+﻿@page "/Gantt"
+@model razorpm.Pages.GanttModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Диаграмма Ганта";
+}
+
+<style>
+    .gantt-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .gantt-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .gantt-range {
+        font-size: 13px;
+        color: var(--text-light);
+    }
+
+    .gantt-filter-form {
+        display: flex;
+        gap: 10px;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+        .gantt-filter-form label {
+            font-size: 12px;
+            color: var(--text-light);
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .gantt-filter-form select {
+            min-width: 200px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+    .gantt-legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        align-items: center;
+        font-size: 12px;
+        color: var(--text-light);
+    }
+
+    .gantt-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .gantt-legend-mark {
+        width: 18px;
+        height: 9px;
+        border-radius: 2px;
+        border: 1px solid var(--border);
+        display: inline-block;
+    }
+
+        .gantt-legend-mark.active {
+            background: #eef3f6;
+            border-color: #d8e1e7;
+        }
+
+        .gantt-legend-mark.done {
+            background: #eef4ef;
+            border-color: #d7e3d9;
+        }
+
+        .gantt-legend-mark.overdue {
+            background: #fbefef;
+            border-color: #ead2d2;
+        }
+
+    .gantt-board {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .gantt-group {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--card);
+        overflow: hidden;
+    }
+
+    .gantt-group-head {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        background: var(--hover);
+        font-weight: 600;
+    }
+
+    .gantt-scale {
+        display: grid;
+        gap: 0;
+        border-bottom: 1px solid var(--border);
+        background: var(--card);
+    }
+
+    .gantt-scale-cell {
+        text-align: center;
+        padding: 8px 4px;
+        font-size: 11px;
+        color: var(--text-light);
+        border-right: 1px solid var(--border);
+    }
+
+        .gantt-scale-cell:last-child {
+            border-right: none;
+        }
+
+    .gantt-row {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 14px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+        align-items: center;
+    }
+
+        .gantt-row:last-child {
+            border-bottom: none;
+        }
+
+    .gantt-info {
+        min-width: 0;
+    }
+
+    .gantt-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .gantt-meta {
+        font-size: 12px;
+        color: var(--text-light);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .gantt-track {
+        position: relative;
+        height: 46px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: repeating-linear-gradient(
+            to right,
+            var(--hover) 0,
+            var(--hover) calc(100% / var(--days) - 1px),
+            var(--border) calc(100% / var(--days) - 1px),
+            var(--border) calc(100% / var(--days))
+        );
+        overflow: hidden;
+    }
+
+    .gantt-bar {
+        position: absolute;
+        top: 8px;
+        height: 28px;
+        border-radius: 4px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-decoration: none;
+        z-index: 2;
+        border: 1px solid transparent;
+    }
+
+        .gantt-bar.active {
+            background: #eef3f6 !important;
+            border-color: #d8e1e7 !important;
+            color: #3f5668 !important;
+        }
+
+        .gantt-bar.done {
+            background: #eef4ef !important;
+            border-color: #d7e3d9 !important;
+            color: #3f5f45 !important;
+        }
+
+        .gantt-bar.overdue {
+            background: #fbefef !important;
+            border-color: #ead2d2 !important;
+            color: #7a3a3a !important;
+        }
+
+        .gantt-bar:hover {
+            opacity: 1;
+            filter: brightness(0.98);
+        }
+
+    .gantt-empty {
+        color: var(--text-light);
+    }
+
+    body.dark .gantt-legend-mark.active,
+    body.dark-theme .gantt-legend-mark.active {
+        background: #22303a;
+        border-color: #3d5868;
+    }
+
+    body.dark .gantt-legend-mark.done,
+    body.dark-theme .gantt-legend-mark.done {
+        background: #233229;
+        border-color: #42624b;
+    }
+
+    body.dark .gantt-legend-mark.overdue,
+    body.dark-theme .gantt-legend-mark.overdue {
+        background: #3a2525;
+        border-color: #704141;
+    }
+
+    @@media (max-width: 1000px) {
+        .gantt-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="gantt-wrap">
+    <div class="gantt-top">
+        <div>
+            <h2 style="margin:0 0 6px 0;">Диаграмма Ганта</h2>
+            <div class="gantt-range">
+                @Model.ScaleStart.ToString("dd.MM.yyyy") — @Model.ScaleEnd.ToString("dd.MM.yyyy")
+            </div>
+        </div>
+
+        <form method="get" class="gantt-filter-form">
+            <div>
+                <label>Проект</label>
+                <select name="projectId">
+                    <option value="">Все проекты</option>
+                    @foreach (var project in Model.ProjectOptions)
+                    {
+                            <option value="@project.Value" selected="@(Model.projectId?.ToString() == project.Value)">
+                            @project.Text
+                            </option>
+                    }
+                </select>
+            </div>
+
+            <button class="btn btn-soft" type="submit">Применить</button>
+        </form>
+    </div>
+
+    <div class="gantt-legend">
+        <span class="gantt-legend-item">
+            <span class="gantt-legend-mark active"></span>
+            Активна
+        </span>
+
+        <span class="gantt-legend-item">
+            <span class="gantt-legend-mark done"></span>
+            Завершена
+        </span>
+
+        <span class="gantt-legend-item">
+            <span class="gantt-legend-mark overdue"></span>
+            Просрочена
+        </span>
+    </div>
+
+    @if (Model.Groups.Count == 0)
+    {
+            <div class="page-card">
+                <div class="gantt-empty">Нет задач с датой начала и сроком.</div>
+            </div>
+    }
+    else
+    {
+            <div class="gantt-board">
+            @foreach (var group in Model.Groups)
+            {
+                        <div class="gantt-group">
+                            <div class="gantt-group-head">
+                        @group.ProjectName
+                            </div>
+
+                            <div class="gantt-scale"
+                                 style="grid-template-columns: 260px repeat(@Model.TotalDays, 1fr);">
+                                <div></div>
+
+                        @foreach (var day in Model.Headers)
+                        {
+                                        <div class="gantt-scale-cell" title="@day.DayShort">
+                                @day.DayNumber
+                                        </div>
+                        }
+                            </div>
+
+                    @foreach (var item in group.Items)
+                    {
+                                    <div class="gantt-row">
+                                        <div class="gantt-info">
+                                            <div class="gantt-title">@item.Title</div>
+
+                                            <div class="gantt-meta">
+                                                <div>@item.Assignee</div>
+                                                <div>@item.StartText — @item.EndText</div>
+                                                <div>@item.StatusRu</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="gantt-track" style="--days:@Model.TotalDays;">
+                                            <a class="@item.BarClass"
+                                               asp-page="/TaskDetails"
+                                               asp-route-id="@item.TaskId"
+                                               title="@item.Title: @item.StartText — @item.EndText, @item.StatusRu"
+                                               style="left:@(item.OffsetPercent.ToString(System.Globalization.CultureInfo.InvariantCulture))%;
+                                          width:@(item.WidthPercent.ToString(System.Globalization.CultureInfo.InvariantCulture))%;">
+                                    @item.Title
+                                            </a>
+                                        </div>
+                                    </div>
+                    }
+                        </div>
+            }
+            </div>
+    }
+</div>

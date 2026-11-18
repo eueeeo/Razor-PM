@@ -1,0 +1,192 @@
+﻿@page "/TaskComments"
+@model razorpm.Pages.TaskCommentsModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Комментарии";
+}
+
+@if (Model.Task == null)
+{
+    <div class="comments-card">
+        <div class="comments-empty">Задача не найдена</div>
+    </div>
+}
+else
+{
+    <div class="comments-page">
+        <div class="comments-actions">
+            <a class="btn btn-soft"
+               asp-page="/TaskDetails"
+               asp-route-id="@Model.Task.Id">
+                К задаче
+            </a>
+
+            <a class="btn btn-soft" asp-page="/Tasks">
+                К списку
+            </a>
+        </div>
+
+        <section class="comments-card">
+            <div class="comments-task-head">
+                <div>
+                    <div class="comments-label">Задача</div>
+                    <h1>@Model.Task.Title</h1>
+                </div>
+
+                <div class="comments-task-meta">
+                    <span>@Model.Task.ProjectTitle</span>
+                    <span>@Model.Task.AssigneeName</span>
+                    <span>@Model.Task.DueDateText</span>
+                </div>
+            </div>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Error))
+        {
+            <div class="comments-error">
+                @Model.Error
+            </div>
+        }
+
+        <div class="comments-layout">
+            <section class="comments-card">
+                <div class="comments-section-head">
+                    <h2>Комментарии</h2>
+                </div>
+
+                <form method="post"
+                      asp-page-handler="AddComment"
+                      class="comment-form">
+
+                    <input type="hidden" asp-for="taskId" />
+
+    <textarea asp-for="NewComment"
+              rows="4"
+              maxlength="1000"
+              placeholder="Введите комментарий"></textarea>
+
+                    <div class="comments-form-actions">
+                        <button class="btn" type="submit">
+                            Добавить
+                        </button>
+                    </div>
+                </form>
+
+                @if (Model.Comments.Count == 0)
+                {
+                    <div class="comments-empty">
+                        Комментариев пока нет
+                    </div>
+                }
+                else
+                {
+                    <div class="comments-list">
+                        @foreach (var comment in Model.Comments)
+                        {
+                            <div class="comment-item">
+                                <div class="comment-top">
+                                    <div>
+                                        <div class="comment-author">@comment.AuthorName</div>
+                                        <div class="comment-date">@comment.CreatedAtText</div>
+                                    </div>
+
+                                    @if (Model.CanDeleteComment(comment))
+                                    {
+                                        <form method="post"
+                                              asp-page-handler="DeleteComment"
+                                              asp-route-id="@comment.Id">
+
+                                            <button class="btn btn-soft"
+                                                    type="submit"
+                                                    onclick="return confirm('Удалить комментарий?');">
+                                                Удалить
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+
+                                <div class="comment-text">
+                                    @comment.Text
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="comments-card">
+                <div class="comments-section-head">
+                    <h2>Вложения</h2>
+                </div>
+
+                <form method="post"
+                      enctype="multipart/form-data"
+                      asp-page-handler="Upload"
+                      class="attachment-form">
+
+                    <input type="hidden" asp-for="taskId" />
+
+                    <input asp-for="UploadFile"
+                           type="file"
+                           accept=".txt,.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip" />
+
+                    <div class="attachment-note">
+                        Максимальный размер файла — 5 МБ
+                    </div>
+
+                    <div class="comments-form-actions">
+                        <button class="btn" type="submit">
+                            Загрузить
+                        </button>
+                    </div>
+                </form>
+
+                @if (Model.Attachments.Count == 0)
+                {
+                    <div class="comments-empty">
+                        Файлов пока нет
+                    </div>
+                }
+                else
+                {
+                    <div class="attachments-list">
+                        @foreach (var file in Model.Attachments)
+                        {
+                            <div class="attachment-item">
+                                <div class="attachment-name">
+                                    @file.FileName
+                                </div>
+
+                                <div class="attachment-meta">
+                                    @file.AuthorName · @file.CreatedAtText
+                                </div>
+
+                                <div class="attachment-actions">
+                                    <a class="btn btn-soft btn-small"
+                                       href="@file.FilePath"
+                                       target="_blank">
+                                        Открыть
+                                    </a>
+
+                                    @if (Model.CanDeleteAttachment(file))
+                                    {
+                                        <form method="post"
+                                              asp-page-handler="DeleteAttachment"
+                                              asp-route-id="@file.Id">
+
+                                            <button class="btn btn-soft"
+                                                    type="submit"
+                                                    onclick="return confirm('Удалить файл?');">
+                                                Удалить
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+        </div>
+    </div>
+}

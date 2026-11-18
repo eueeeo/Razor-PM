@@ -1,0 +1,174 @@
+﻿@page
+@model razorpm.Pages.ProfileModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Профиль";
+}
+
+@if (Model.CurrentUser == null)
+{
+    <div class="profile-card-clean">
+        <div class="profile-empty">Пользователь не найден</div>
+    </div>
+}
+else
+{
+    <div class="profile-page">
+        <div class="profile-actions">
+            <a class="btn btn-soft" asp-page="/Settings">Настройки</a>
+            <a class="btn btn-soft" asp-page="/ChangePassword">Сменить пароль</a>
+        </div>
+
+        <section class="profile-card-clean">
+            <div class="profile-head-clean">
+                <div class="profile-avatar-clean">
+                    @(string.IsNullOrWhiteSpace(Model.CurrentUser.Name) ? "U" : Model.CurrentUser.Name.Substring(0, 1).ToUpper())
+                </div>
+
+                <div>
+                    <h1>@Model.CurrentUser.Name</h1>
+
+                    <div class="profile-badges-clean">
+                        <span class="badge">@Model.CurrentUser.Login</span>
+                        <span class="badge">@Model.RoleTitle</span>
+                        <span class="badge">@Model.AccountStatusText</span>
+                        <span class="badge">@(Model.CurrentUser.Theme == "dark" ? "Тёмная тема" : "Светлая тема")</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="profile-card-clean">
+            <div class="profile-section-head">
+                <h2>Основная информация</h2>
+            </div>
+
+            <div class="task-details-grid">
+                <div class="task-detail-item">
+                    <span>Имя</span>
+                    <strong>@Model.CurrentUser.Name</strong>
+                </div>
+
+                <div class="task-detail-item">
+                    <span>Логин</span>
+                    <strong>@Model.CurrentUser.Login</strong>
+                </div>
+
+                <div class="task-detail-item">
+                    <span>Email</span>
+                    <strong>@(string.IsNullOrWhiteSpace(Model.CurrentUser.Email) ? "Не указан" : Model.CurrentUser.Email)</strong>
+                </div>
+
+                <div class="task-detail-item">
+                    <span>Роль</span>
+                    <strong>@Model.RoleTitle</strong>
+                </div>
+            </div>
+        </section>
+
+        <div class="profile-summary-clean">
+            <div class="profile-summary-item">
+                <span>Мои проекты</span>
+                <strong>@Model.OwnerProjectsCount</strong>
+            </div>
+
+            <div class="profile-summary-item">
+                <span>Участие</span>
+                <strong>@Model.MemberProjectsCount</strong>
+            </div>
+
+            <div class="profile-summary-item">
+                <span>Задачи</span>
+                <strong>@Model.AssignedTasksCount</strong>
+            </div>
+
+            <div class="profile-summary-item">
+                <span>Активные</span>
+                <strong>@Model.ActiveTasksCount</strong>
+            </div>
+
+            <div class="profile-summary-item">
+                <span>Завершённые</span>
+                <strong>@Model.DoneTasksCount</strong>
+            </div>
+
+            <div class="profile-summary-item">
+                <span>Просроченные</span>
+                <strong>@Model.OverdueTasksCount</strong>
+            </div>
+
+            <div class="profile-summary-item">
+                <span>Часы</span>
+                <strong>@Model.SpentHoursTotal</strong>
+            </div>
+        </div>
+
+        <section class="profile-card-clean">
+            <div class="profile-section-head">
+                <h2>Что доступно по роли</h2>
+            </div>
+
+            @if (Model.CurrentUser.Role == "admin")
+            {
+                <div class="profile-details-text">
+                    Администратор управляет пользователями, ролями и общей аналитикой системы.
+                </div>
+            }
+            else if (Model.CurrentUser.Role == "director")
+            {
+                <div class="profile-details-text">
+                    Руководитель видит рабочую картину, проекты, задачи, отчёты и назначает ответственных.
+                </div>
+            }
+            else if (Model.CurrentUser.Role == "manager")
+            {
+                <div class="profile-details-text">
+                    Ответственный создаёт проекты, добавляет участников, назначает задачи и контролирует выполнение.
+                </div>
+            }
+            else
+            {
+                <div class="profile-details-text">
+                    Исполнитель видит назначенные задачи, меняет их статус и отслеживает сроки.
+                </div>
+            }
+        </section>
+
+        <section class="profile-card-clean">
+            <div class="profile-section-head">
+                <h2>Быстрые действия</h2>
+            </div>
+
+            <div class="profile-links-clean">
+                @if (Model.CurrentUser.Role == "admin")
+                {
+                    <a class="btn btn-soft" asp-page="/AdminDashboard">Админ-панель</a>
+                    <a class="btn btn-soft" asp-page="/Users">Пользователи</a>
+                    <a class="btn btn-soft" asp-page="/Reports">Аналитика</a>
+                }
+                else
+                {
+                    <a class="btn btn-soft" asp-page="/Tasks">Задачи</a>
+                    <a class="btn btn-soft" asp-page="/Projects">Проекты</a>
+                    <a class="btn btn-soft" asp-page="/Calendar">Календарь</a>
+
+                    @if (Model.CurrentUser.Role == "director")
+                    {
+                        <a class="btn btn-soft" asp-page="/Users">Сотрудники</a>
+                        <a class="btn btn-soft" asp-page="/Reports">Отчёты</a>
+                        <a class="btn btn-soft" asp-page="/Gantt">Диаграмма</a>
+                    }
+
+                    @if (Model.CurrentUser.Role == "manager")
+                    {
+                        <a class="btn btn-soft" asp-page="/Reports">Отчёты</a>
+                        <a class="btn btn-soft" asp-page="/Gantt">Диаграмма</a>
+                    }
+                }
+
+                <a class="btn btn-soft" asp-page="/Settings">Настройки</a>
+                <a class="btn btn-soft" asp-page="/ChangePassword">Сменить пароль</a>
+            </div>
+        </section>
+    </div>
+}

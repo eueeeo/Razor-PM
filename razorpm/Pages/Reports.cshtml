@@ -1,0 +1,187 @@
+﻿@page
+@model razorpm.Pages.ReportsModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Model.IsAdmin ? "Аналитика" : "Отчеты";
+}
+
+<div class="reports-page">
+    <div class="clean-card" style="margin-bottom:16px;">
+        <div class="clean-card-head">
+            <div>
+                <h2>@Model.ReportTitle</h2>
+                <div class="text-muted" style="font-size:13px;">
+                    @Model.ReportDescription
+                </div>
+            </div>
+
+            <form method="post" asp-page-handler="DownloadPdf">
+                <input type="hidden" name="projectId" value="@Model.projectId" />
+                <input type="hidden" name="archive" value="@Model.archive" />
+                <button class="btn btn-soft" type="submit">Скачать полный PDF</button>
+            </form>
+        </div>
+    </div>
+
+    <form method="get" class="reports-filters">
+        <select name="archive">
+            <option value="">Обычные проекты</option>
+            <option value="archived" selected="@(Model.archive == "archived")">Архивные проекты</option>
+        </select>
+
+        <select name="projectId">
+            <option value="">Все проекты</option>
+            @foreach (var project in Model.ProjectOptions)
+            {
+                <option value="@project.Value" selected="@(Model.projectId?.ToString() == project.Value)">
+                    @project.Text
+                </option>
+            }
+        </select>
+
+        <button class="btn btn-soft" type="submit">Применить</button>
+        <a class="btn btn-soft" asp-page="/Reports">Сбросить</a>
+    </form>
+
+    <div class="reports-summary">
+        <div class="reports-summary-item">
+            <span>Проекты</span>
+            <strong>@Model.ProjectsTotal</strong>
+        </div>
+
+        <div class="reports-summary-item">
+            <span>Задачи</span>
+            <strong>@Model.TasksTotal</strong>
+        </div>
+
+        <div class="reports-summary-item">
+            <span>Активные</span>
+            <strong>@Model.TasksActive</strong>
+        </div>
+
+        <div class="reports-summary-item">
+            <span>Завершенные</span>
+            <strong>@Model.TasksDone</strong>
+        </div>
+
+        <div class="reports-summary-item soft-overdue">
+            <span>Просроченные</span>
+            <strong>@Model.TasksOverdue</strong>
+        </div>
+
+        <div class="reports-summary-item">
+            <span>Часы</span>
+            <strong>@Model.TotalHours</strong>
+        </div>
+    </div>
+
+    <div class="reports-grid">
+        <section class="reports-card report-table-card">
+            <div class="reports-card-head reports-card-head-fixed">
+                <h2>По сотрудникам</h2>
+
+                <div class="reports-card-actions">
+                    <form method="post" asp-page-handler="DownloadEmployees">
+                        <input type="hidden" name="projectId" value="@Model.projectId" />
+                        <input type="hidden" name="archive" value="@Model.archive" />
+                        <button class="btn btn-soft btn-small" type="submit">CSV по сотрудникам</button>
+                    </form>
+
+                    <form method="post" asp-page-handler="DownloadEmployeesPdf">
+                        <input type="hidden" name="projectId" value="@Model.projectId" />
+                        <input type="hidden" name="archive" value="@Model.archive" />
+                        <button class="btn btn-soft btn-small" type="submit">PDF по сотрудникам</button>
+                    </form>
+                </div>
+            </div>
+
+            @if (Model.EmployeeRows.Count == 0)
+            {
+                <div class="reports-empty">Данных пока нет</div>
+            }
+            else
+            {
+                <div class="reports-table-wrap">
+                    <table class="reports-table">
+                        <thead>
+                            <tr>
+                                <th>Сотрудник</th>
+                                <th>Всего</th>
+                                <th>Активные</th>
+                                <th>Завершенные</th>
+                                <th>Часы</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var row in Model.EmployeeRows)
+                            {
+                                <tr>
+                                    <td>@row.Employee</td>
+                                    <td>@row.TotalTasks</td>
+                                    <td>@row.ActiveTasks</td>
+                                    <td>@row.DoneTasks</td>
+                                    <td>@row.TotalHours</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <section class="reports-card report-table-card">
+            <div class="reports-card-head reports-card-head-fixed">
+                <h2>По проектам</h2>
+
+                <div class="reports-card-actions">
+                    <form method="post" asp-page-handler="DownloadProjects">
+                        <input type="hidden" name="projectId" value="@Model.projectId" />
+                        <input type="hidden" name="archive" value="@Model.archive" />
+                        <button class="btn btn-soft btn-small" type="submit">CSV по проектам</button>
+                    </form>
+
+                    <form method="post" asp-page-handler="DownloadProjectsPdf">
+                        <input type="hidden" name="projectId" value="@Model.projectId" />
+                        <input type="hidden" name="archive" value="@Model.archive" />
+                        <button class="btn btn-soft btn-small" type="submit">PDF по проектам</button>
+                    </form>
+                </div>
+            </div>
+
+            @if (Model.ProjectRows.Count == 0)
+            {
+                <div class="reports-empty">Данных пока нет</div>
+            }
+            else
+            {
+                <div class="reports-table-wrap">
+                    <table class="reports-table">
+                        <thead>
+                            <tr>
+                                <th>Проект</th>
+                                <th>Всего</th>
+                                <th>Активные</th>
+                                <th>Завершенные</th>
+                                <th>Часы</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var row in Model.ProjectRows)
+                            {
+                                <tr>
+                                    <td>@row.Employee</td>
+                                    <td>@row.TotalTasks</td>
+                                    <td>@row.ActiveTasks</td>
+                                    <td>@row.DoneTasks</td>
+                                    <td>@row.TotalHours</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    </div>
+</div>

@@ -1,0 +1,59 @@
+﻿@page "/ProjectEdit"
+@model razorpm.Pages.ProjectEditModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Редактирование проекта";
+}
+
+<div class="form-page">
+    <div class="form-actions-top">
+        <a class="btn btn-soft"
+           asp-page="/ProjectDetails"
+           asp-route-id="@Model.Id">
+            К проекту
+        </a>
+
+        <a class="btn btn-soft" asp-page="/Projects">К списку</a>
+    </div>
+
+    <section class="form-card">
+        <div class="form-card-head">
+            <h1>Редактирование проекта</h1>
+        </div>
+
+        <form method="post" class="clean-form">
+            <input type="hidden" asp-for="Id" />
+
+            <div class="form-group">
+                <label>Название</label>
+                <input asp-for="Name"
+                       required
+                       minlength="3"
+                       maxlength="100" />
+            </div>
+
+            <div class="form-group">
+                <label>Статус</label>
+                <select asp-for="Status" required>
+                    <option value="active">Активный</option>
+                    <option value="done">Завершенный</option>
+                </select>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Error))
+            {
+                <div class="form-error">@Model.Error</div>
+            }
+
+            <div class="form-actions">
+                <button class="btn" type="submit">Сохранить</button>
+
+                <a class="btn btn-soft"
+                   asp-page="/ProjectDetails"
+                   asp-route-id="@Model.Id">
+                    Отмена
+                </a>
+            </div>
+        </form>
+    </section>
+</div>

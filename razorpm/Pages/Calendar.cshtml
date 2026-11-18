@@ -1,0 +1,485 @@
+﻿@page "/Calendar"
+@model razorpm.Pages.CalendarModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Календарь";
+
+    var firstWeekDay = ((int)new DateTime(Model.Year, Model.Month, 1).DayOfWeek + 6) % 7;
+    var today = DateTime.Today;
+}
+
+<style>
+    .cal-wrap {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 16px;
+        align-items: start;
+    }
+
+    .cal-main {
+        min-width: 0;
+    }
+
+    .cal-side {
+        min-width: 0;
+    }
+
+    .cal-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .cal-nav {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .cal-title {
+        min-width: 150px;
+        text-align: center;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        background: var(--card);
+        font-size: 16px;
+        font-weight: 400;
+    }
+
+    .cal-filters {
+        display: flex;
+        gap: 10px;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .cal-filter {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+        .cal-filter label {
+            font-size: 12px;
+            color: var(--text-light);
+            font-weight: 400;
+        }
+
+        .cal-filter select {
+            min-width: 190px;
+            min-height: 34px;
+            padding: 0 10px;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 13px;
+        }
+
+    .cal-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 16px;
+    }
+
+    .cal-weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .cal-head {
+        text-align: center;
+        font-size: 12px;
+        color: var(--text-light);
+        font-weight: 400;
+        padding: 8px 0;
+        background: var(--hover);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+    }
+
+    .cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .cal-empty {
+        min-height: 104px;
+    }
+
+    .cal-day {
+        position: relative;
+        min-height: 104px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        background: var(--card);
+        padding: 10px;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        overflow: hidden;
+        transition: 0.15s ease;
+    }
+
+        .cal-day:hover {
+            background: #fafafa;
+            border-color: #cfcfcf;
+        }
+
+        .cal-day.selected {
+            border-color: #777;
+            box-shadow: 0 0 0 1px #777 inset;
+            background: #fbfbfb;
+        }
+
+        .cal-day.today {
+            background: #f3f3f3;
+        }
+
+    .cal-num {
+        font-size: 13px;
+        font-weight: 400;
+        color: var(--text);
+        line-height: 1;
+    }
+
+    .cal-count {
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        min-height: 24px;
+        padding: 0 7px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid #e1e1e1;
+        border-radius: 3px;
+        background: #f1f1f1;
+        color: #555;
+        font-size: 11px;
+        font-weight: 400;
+        line-height: 1;
+    }
+
+    .cal-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #777;
+        flex-shrink: 0;
+    }
+
+    .cal-count.overdue {
+        background: #fffafa;
+        border-color: #efd6d6;
+        color: #7a3a3a;
+    }
+
+        .cal-count.overdue .cal-dot {
+            background: #9a5a5a;
+        }
+
+    .cal-side-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 16px;
+    }
+
+    .cal-side-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+    }
+
+        .cal-side-head h2 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 400;
+            color: var(--text);
+        }
+
+    .cal-empty-text {
+        color: var(--text-light);
+        font-size: 13px;
+        padding: 8px 0;
+    }
+
+    .event-link {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .event-box {
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        background: var(--card);
+        margin-bottom: 10px;
+        transition: 0.15s ease;
+    }
+
+    .event-link:hover .event-box {
+        background: #fafafa;
+        border-color: #cfcfcf;
+    }
+
+    .event-box.overdue {
+        background: #fffafa;
+        border-color: #efd6d6;
+    }
+
+    .event-title {
+        font-weight: 400;
+        margin-bottom: 7px;
+        font-size: 14px;
+        color: var(--text);
+    }
+
+    .event-meta {
+        font-size: 12px;
+        color: var(--text-light);
+        margin-bottom: 7px;
+    }
+
+    .event-desc {
+        font-size: 12px;
+        color: var(--text-light);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    @@media (max-width: 1100px) {
+        .cal-wrap {
+            grid-template-columns: 1fr;
+        }
+
+        .cal-side {
+            width: 100%;
+        }
+    }
+
+    @@media (max-width: 760px) {
+        .cal-card {
+            overflow-x: auto;
+        }
+
+        .cal-weekdays,
+        .cal-grid {
+            min-width: 760px;
+        }
+
+        .cal-top {
+            align-items: flex-start;
+        }
+
+        .cal-filters {
+            width: 100%;
+        }
+
+        .cal-filter {
+            flex: 1;
+        }
+
+            .cal-filter select {
+                width: 100%;
+            }
+    }
+</style>
+
+<div class="cal-top">
+    <div class="cal-nav">
+        <a class="btn btn-soft"
+           asp-page="/Calendar"
+           asp-route-y="@Model.PrevYear"
+           asp-route-m="@Model.PrevMonth"
+           asp-route-projectId="@Model.projectId"
+           asp-route-archive="@Model.archive"
+           asp-route-scope="@Model.scope"
+           asp-route-status="@Model.status">←</a>
+
+        <div class="cal-title">@Model.MonthTitle</div>
+
+        <a class="btn btn-soft"
+           asp-page="/Calendar"
+           asp-route-y="@Model.NextYear"
+           asp-route-m="@Model.NextMonth"
+           asp-route-projectId="@Model.projectId"
+           asp-route-archive="@Model.archive"
+           asp-route-scope="@Model.scope"
+           asp-route-status="@Model.status">→</a>
+    </div>
+
+    <form method="get" class="cal-filters">
+        <input type="hidden" name="y" value="@Model.Year" />
+        <input type="hidden" name="m" value="@Model.Month" />
+        <input type="hidden" name="d" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+
+        @if (Model.CanUseProjectFilter)
+        {
+            <div class="cal-filter">
+                <label>Тип проектов</label>
+                <select name="archive">
+                    <option value="" selected="@(Model.archive != "archived")">Обычные проекты</option>
+                    <option value="archived" selected="@(Model.archive == "archived")">Архивные проекты</option>
+                </select>
+            </div>
+
+            <div class="cal-filter">
+                <label>Проект</label>
+                <select name="projectId">
+                    <option value="">Все проекты</option>
+                    @foreach (var project in Model.ProjectOptions)
+                    {
+                        <option value="@project.Value" selected="@(Model.projectId?.ToString() == project.Value)">
+                            @project.Text
+                        </option>
+                    }
+                </select>
+            </div>
+        }
+
+        @if (!Model.IsExecutor)
+        {
+            <div class="cal-filter">
+                <label>Задачи</label>
+                <select name="scope">
+                    <option value="" selected="@(string.IsNullOrWhiteSpace(Model.scope))">Все доступные</option>
+                    <option value="my" selected="@(Model.scope == "my")">Мои задачи</option>
+                    <option value="today" selected="@(Model.scope == "today")">Сегодня</option>
+                    <option value="overdue" selected="@(Model.scope == "overdue")">Просроченные</option>
+                </select>
+            </div>
+        }
+        else
+        {
+            <input type="hidden" name="scope" value="my" />
+        }
+
+        <div class="cal-filter">
+            <label>Статус</label>
+            <select name="status">
+                <option value="" selected="@(string.IsNullOrWhiteSpace(Model.status))">Все статусы</option>
+                <option value="active" selected="@(Model.status == "active")">Активные</option>
+                <option value="done" selected="@(Model.status == "done")">Завершенные</option>
+            </select>
+        </div>
+
+        <button class="btn btn-soft" type="submit">Применить</button>
+        <a class="btn btn-soft" asp-page="/Calendar">Сбросить</a>
+    </form>
+</div>
+
+<div class="cal-wrap">
+    <div class="cal-main">
+        <div class="cal-card">
+            <div class="cal-weekdays">
+                <div class="cal-head">Пн</div>
+                <div class="cal-head">Вт</div>
+                <div class="cal-head">Ср</div>
+                <div class="cal-head">Чт</div>
+                <div class="cal-head">Пт</div>
+                <div class="cal-head">Сб</div>
+                <div class="cal-head">Вс</div>
+            </div>
+
+            <div class="cal-grid">
+                @for (int i = 0; i < firstWeekDay; i++)
+                {
+                    <div class="cal-empty"></div>
+                }
+
+                @foreach (var day in Model.Days)
+                {
+                    var isToday = day.Date.Date == today.Date;
+                    var isSelected = day.Date.Date == Model.SelectedDate.Date;
+                    var hasTasks = day.Tasks.Count > 0;
+                    var hasOverdue = day.Tasks.Any(t => t.IsOverdue);
+
+                    <a class="cal-day @(isToday ? "today" : "") @(isSelected ? "selected" : "")"
+                       asp-page="/Calendar"
+                       asp-route-y="@Model.Year"
+                       asp-route-m="@Model.Month"
+                       asp-route-d="@day.Date.ToString("yyyy-MM-dd")"
+                       asp-route-projectId="@Model.projectId"
+                       asp-route-archive="@Model.archive"
+                       asp-route-scope="@Model.scope"
+                       asp-route-status="@Model.status">
+
+                        <div class="cal-num">@day.Date.Day</div>
+
+                        @if (hasTasks)
+                        {
+                            <div class="cal-count @(hasOverdue ? "overdue" : "")">
+                                <span class="cal-dot"></span>
+                                <span>Задач: @day.Tasks.Count</span>
+                            </div>
+                        }
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="cal-side">
+        <div class="cal-side-card">
+            <div class="cal-side-head">
+                <h2>План на @Model.SelectedDate.ToString("dd.MM.yyyy")</h2>
+
+                @if (Model.CanCreateNewTask)
+                {
+                    <a class="btn btn-soft"
+                       asp-page="/TaskCreate"
+                       asp-route-date="@Model.SelectedDate.ToString("yyyy-MM-dd")"
+                       asp-route-projectId="@Model.projectId">
+                        + Задача
+                    </a>
+                }
+            </div>
+
+            @if (Model.DayTasks.Count == 0)
+            {
+                <div class="cal-empty-text">На этот день задач нет</div>
+            }
+            else
+            {
+                @foreach (var task in Model.DayTasks)
+                {
+                    <a class="event-link"
+                       asp-page="/TaskDetails"
+                       asp-route-id="@task.Id">
+                        <div class="event-box @(task.IsOverdue ? "overdue" : "") @(task.Priority == "high" ? "event-priority-high" : task.Priority == "medium" ? "event-priority-medium" : "event-priority-low")">
+                            <div class="event-title">@task.Title</div>
+
+                            <div class="event-meta">
+                                @task.DueDateText
+                            </div>
+
+                            <div class="event-desc">
+                                <div>Проект: @task.ProjectTitle</div>
+                                <div>Исполнитель: @task.AssigneeName</div>
+                                <div>Статус: @task.StatusRu</div>
+                                <div>Приоритет: @task.PriorityRu</div>
+                            </div>
+                        </div>
+                    </a>
+                }
+            }
+        </div>
+    </div>
+</div>
